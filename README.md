@@ -8,20 +8,7 @@ This repository contains **Module 1 (Off-Chain Developer Activity)** of the zk-D
 
 ## 🏗️ Architecture Blueprint
 
- [This Module: Local PC]             [Module 2: GCP Secure Enclave]       [Module 3: Solana On-Chain]
- ┌─────────────────────────┐        ┌─────────────────────────┐        ┌─────────────────────────┐
- │   👨‍💻 Developer IDE/CLI  │        │ 🔓 Decrypt & Verify     │        │ 🛡️ Solana Smart Contract│
- └──────────┬──────────────┘        └────────────┬────────────┘        └────────────┬────────────┘
-            │                                    │                                  │
- ┌──────────▼──────────────┐                     │                                  │
- │ 🛑 LiteLLM Proxy Gate   │                     │                                  │
- │   (Intercept Port 4000) │                     │                                  │
- └──────────┬──────────────┘                     │                                  │
-            │ (Parse Token/Text)                 │                                  │
- ┌──────────▼──────────────┐                     │                                  │
- │ 🔒 Asymmetric E2EE      ├─────────────────────┘                                  │
- │  - Encrypt w/ Server PK │ 🚀 (Encrypted Packet)                                   ▼
- └─────────────────────────┘                                           💸 (USDC Instant Settlement)
+<img width="1024" height="559" alt="Image" src="https://github.com/user-attachments/assets/d11a3489-b9a7-424b-b82c-ba0f109325f5" />
 
 ---
 
