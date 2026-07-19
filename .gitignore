@@ -1,0 +1,14 @@
+# 가상환경 격리
+venv/
+.venv/
+
+# 환경 변수 및 중요 키 파일 격리
+.env
+*.pem
+*.key
+secret.key
+
+# PyInstaller 빌드 결과물 격리 (깃허브 용량 방지)
+build/
+dist/
+*.spec
