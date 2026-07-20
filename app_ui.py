@@ -6,6 +6,11 @@
 #
 # API keys are never read from disk, never stored, and never logged — they only
 # transit in-memory from the IDE/tool request to the upstream provider.
+#
+# Metering modes (synced to web_users.meteringMode):
+#   off   — assignment heartbeat only (useful as a "still working" status app)
+#   basic — FastAPI /v1/chat/completions passthrough + optional API-base redirect
+#   deep  — optional mitmproxy (experimental; do NOT force through Cursor Agent)
 from __future__ import annotations
 
 import sys
@@ -49,6 +54,8 @@ from uvicorn import Config, Server
 
 _PROVIDER_KEY_RE = re.compile(r"(API_KEY|ACCESS_TOKEN|SECRET|PASSWORD)$", re.I)
 
+# Load service URLs from .env but NEVER ingest provider secrets into this process.
+# Developer API keys must stay in the IDE/CLI that calls the gateway.
 if os.path.exists(".env"):
     with open(".env", encoding="utf-8") as f:
         for line in f:
@@ -58,7 +65,8 @@ if os.path.exists(".env"):
                     continue  # never ingest secrets into this process
                 os.environ.setdefault(k, v)
 
-# Scrub any provider secrets that leaked in from the parent shell
+# Scrub any provider secrets that leaked in from the parent shell so LiteLLM
+# cannot accidentally use them instead of per-request Authorization headers.
 for _k in list(os.environ):
     if _PROVIDER_KEY_RE.search(_k):
         os.environ.pop(_k, None)
@@ -68,6 +76,7 @@ CORE_API_URL = os.getenv("CORE_API_URL", "http://localhost:8080")
 GATEWAY_PORT = int(os.getenv("GATEWAY_PORT", "4000"))
 STATE_PATH = Path(os.getenv("ZK_DEVPAY_STATE", ".zk-devpay-device.json"))
 ROUTE_BACKUP_PATH = Path(os.getenv("ZK_DEVPAY_ROUTE_BACKUP", ".zk-devpay-route-backup.json"))
+# Deep MITM addon posts token events here (loopback only). Must match GATEWAY_PORT.
 METER_HOOK_URL = f"http://127.0.0.1:{GATEWAY_PORT}/internal/meter"
 
 # Env vars IDEs/CLIs commonly use for OpenAI-compatible base URLs
@@ -285,6 +294,11 @@ def restore_local_routing() -> None:
 # ---------------------------------------------------------------------------
 
 def encrypt_payload(public_key_pem: str, plaintext: str) -> str:
+    """RSA-OAEP(AES key) || IV(12) || AES-GCM tag(16) || ciphertext — base64.
+
+    Wire format must match zk-devpay-server crypto.service.ts decrypt.
+    Plaintext is the prompt excerpt only; never include API keys.
+    """
     public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
     aes_key = secrets.token_bytes(32)
     iv = secrets.token_bytes(12)
@@ -420,7 +434,11 @@ def normalize_model(model: Optional[str]) -> str:
 
 
 def extract_request_api_key(request: Request) -> Optional[str]:
-    """Ephemeral only — never written to disk or status text."""
+    """Pull provider auth from the inbound IDE request for upstream only.
+
+    Ephemeral in-memory — never written to disk, logs, or status text.
+    zk-DevPay does not register or store developer provider API keys.
+    """
     auth = request.headers.get("authorization") or ""
     if auth.lower().startswith("bearer "):
         token = auth[7:].strip()

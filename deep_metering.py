@@ -1,7 +1,11 @@
-# deep_metering.py — opt-in Deep mode (system proxy + local CA + mitmproxy).
+# deep_metering.py — opt-in Deep mode (local CA + mitmproxy).
 #
-# Only AI-host allowlist traffic is decrypted. API keys are never written to
-# disk or status logs. Stop / crash recovery restores proxy + CA + Cursor proxy.
+# Only AI-host allowlist traffic is parsed for tokens. API keys are never written
+# to disk or status logs. Stop / crash recovery restores CA install + backups.
+#
+# IMPORTANT product limit: forcing Cursor Agent through this proxy breaks
+# streaming. We deliberately do NOT rewrite Cursor settings.json anymore
+# (_patch_cursor_proxy is a no-op). Prefer Basic gateway for real token tests.
 from __future__ import annotations
 
 import json
