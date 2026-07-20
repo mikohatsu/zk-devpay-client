@@ -6,7 +6,17 @@ venv/
 .env
 *.pem
 *.key
+*.p12
+*.cer
 secret.key
+.zk-devpay-device.json
+.zk-devpay-route-backup.json
+.zk-devpay-deep-backup.json
+.zk-devpay-deep/
+
+# Python
+__pycache__/
+*.pyc
 
 # PyInstaller 빌드 결과물 격리 (깃허브 용량 방지)
 build/
